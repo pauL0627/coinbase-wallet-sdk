@@ -1,5 +1,4 @@
 import { ethErrors, serializeError } from "eth-rpc-errors"
-
 import { JSONRPCRequest, JSONRPCResponse } from "../provider/JSONRPC"
 import { AddressString, IntNumber, RegExpString } from "../types"
 import { EthereumTransactionParams } from "./EthereumTransactionParams"
@@ -97,6 +96,12 @@ export abstract class WalletLinkRelayAbstract {
   abstract setChainCallback(
     chainIdCallback: (chainId: string, jsonRpcUrl: string) => void
   ): void
+
+  /**
+   * Whether the provider should first call request ethereum accounts
+   * if handling an add ehereum chain call
+   */
+  abstract supportsUnauthedAddEthereumChain(chainId: string): boolean
 
   public async makeEthereumJSONRPCRequest(
     request: JSONRPCRequest,

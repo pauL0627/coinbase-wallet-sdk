@@ -5,7 +5,6 @@
 import SafeEventEmitter from "@metamask/safe-event-emitter"
 import BN from "bn.js"
 import { ethErrors } from "eth-rpc-errors"
-
 import { WalletLinkAnalytics } from "../connection/WalletLinkAnalytics"
 import { EVENTS, WalletLinkAnalyticsAbstract } from "../init"
 import { ScopedLocalStorage } from "../lib/ScopedLocalStorage"
@@ -251,6 +250,14 @@ export class WalletLinkProvider
     }
 
     const relay = await this.initializeRelay()
+
+    if (
+      !this._isAuthorized() &&
+      !relay.supportsUnauthedAddEthereumChain(chainId.toString())
+    ) {
+      await relay.requestEthereumAccounts().promise
+    }
+
     const res = await relay.addEthereumChain(
       chainId.toString(),
       rpcUrls,
@@ -690,7 +697,9 @@ export class WalletLinkProvider
   private _isKnownAddress(addressString: string): boolean {
     try {
       const address = ensureAddressString(addressString)
-      const lowercaseAddresses = this._addresses.map(address => ensureAddressString(address))
+      const lowercaseAddresses = this._addresses.map(address =>
+        ensureAddressString(address)
+      )
       return lowercaseAddresses.includes(address)
     } catch {}
     return false
@@ -749,8 +758,12 @@ export class WalletLinkProvider
     }
   }
 
+  private _isAuthorized(): boolean {
+    return this._addresses.length > 0
+  }
+
   private _requireAuthorization(): void {
-    if (this._addresses.length === 0) {
+    if (!this._isAuthorized()) {
       throw ethErrors.provider.unauthorized({})
     }
   }
